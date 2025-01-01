@@ -1,35 +1,40 @@
 version: "3.9"
+
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "${PORT}:${PORT}"
     environment:
-      - PORT=3000
-      - DB_HOST=database
-      - DB_PORT=5432
-      - DB_USER=fiberuser
-      - DB_PASSWORD=fiberpassword
-      - DB_NAME=fiberdb
+      PORT: ${PORT}
+      DB_HOST: ${PGHOST}
+      DB_PORT: ${PGPORT}
+      DB_USER: ${PGUSER}
+      DB_PASSWORD: ${PGPASSWORD}
+      DB_NAME: ${PGDATABASE}
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_PUBLIC_URL: ${DATABASE_PUBLIC_URL}
     volumes:
-      - .:/app
+      - .:/app:cached
       - /app/vendor
     depends_on:
       - database
+    restart: unless-stopped
 
   database:
     image: postgres:15
     container_name: fiber_postgres
     environment:
-      POSTGRES_USER: fiberuser
-      POSTGRES_PASSWORD: fiberpassword
-      POSTGRES_DB: fiberdb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${PGPORT}:${PGPORT}"
     volumes:
       - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
 volumes:
   db_data:

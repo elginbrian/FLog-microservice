@@ -14,12 +14,12 @@ import (
 var DB *sql.DB
 
 func ConnectDatabase() {
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		GetEnv("DB_USER", "fiberuser"),
-		GetEnv("DB_PASSWORD", "fiberpassword"),
-		GetEnv("DB_HOST", "localhost"),
-		GetEnv("DB_PORT", "5432"),
-		GetEnv("DB_NAME", "fiberdb"),
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
+		GetEnv("PGUSER", "fiberuser"),
+		GetEnv("PGPASSWORD", "fiberpassword"),
+		GetEnv("PGHOST", "localhost"),
+		GetEnv("PGPORT", "5432"),
+		GetEnv("PGDATABASE", "fiberdb"),
 	)
 
 	var err error
@@ -34,17 +34,21 @@ func ConnectDatabase() {
 
 	log.Println("Successfully connected to the database.")
 
-	m, err := migrate.New(
-		"file://db/migrations",
-		dsn,
-	)
-	if err != nil {
-		log.Fatalf("Failed to initialize migrations: %v", err)
-	}
+	if GetEnv("MIGRATIONS_ENABLED", "true") == "true" {
+		m, err := migrate.New(
+			"file://db/migrations",
+			dsn,
+		)
+		if err != nil {
+			log.Fatalf("Failed to initialize migrations: %v", err)
+		}
 
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		log.Fatalf("Failed to apply migrations: %v", err)
-	}
+		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+			log.Fatalf("Failed to apply migrations: %v", err)
+		}
 
-	log.Println("Migrations applied successfully.")
+		log.Println("Migrations applied successfully.")
+	} else {
+		log.Println("Migrations are disabled.")
+	}
 }
